@@ -2,19 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Intelligent Viewport Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Core Canvas Sandbox</title>
     <style>
+        :root {
+            --bg-main: #0b0b0c;
+            --bg-panel: #131316;
+            --bg-element: #1c1c21;
+            --border-color: #26262b;
+            --accent-glow: #00f5d4;
+            --text-main: #f4f4f6;
+            --text-muted: #8a8a93;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #09090a;
-            color: #e1e1e6;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -22,68 +33,82 @@
             flex-direction: column;
         }
 
-        /* Top Action Panel Bar */
+        /* Top Panel Bar */
         header {
-            background-color: #1e1e24;
-            padding: 10px 16px;
+            background-color: var(--bg-panel);
+            padding: 0 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            border-bottom: 1px solid #29292e;
-            height: 50px;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            height: 48px;
             z-index: 100;
         }
 
-        button {
-            background-color: #29292e;
-            color: #fff;
-            border: 1px solid #323238;
+        .control-btn {
+            background-color: var(--bg-element);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
             padding: 6px 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: -0.01em;
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.12s cubic-bezier(0.2, 0, 0, 1);
         }
 
-        button:active { transform: scale(0.96); }
+        .control-btn:hover {
+            background-color: #222229;
+            border-color: #31313a;
+        }
 
-        .btn-paste {
-            background: #00bfa5;
-            color: #121214;
+        .control-btn:active {
+            transform: scale(0.97);
+            background-color: #18181c;
+        }
+
+        .btn-primary {
+            background: var(--text-main);
+            color: var(--bg-main);
             border: none;
+            font-weight: 600;
         }
 
-        #pc-mobile-toggle {
-            display: none; /* Only managed on real computer screens */
+        .btn-primary:hover {
+            background: #e4e4e7;
+        }
+
+        #pc-device-toggle {
+            display: none;
             margin-left: auto;
-            background-color: #3e3e4a;
-            border-color: #525266;
+            border-color: var(--border-color);
         }
-        #pc-mobile-toggle.active {
-            background: #00bfa5;
-            color: #121214;
-            border-color: #00bfa5;
+        #pc-device-toggle.active {
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 10px rgba(0, 245, 212, 0.15);
         }
 
-        /* Complete Edge-to-Edge Output Panel Workspace */
+        /* Workspace Canvas Container */
         .canvas-container {
             flex: 1;
             width: 100%;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 48px);
             position: relative;
-            background-color: #000;
+            background-color: var(--bg-main);
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
 
-        .device-wrapper {
+        /* High-Fidelity App Shell Frame */
+        .viewport-shell {
             width: 100%;
             height: 100%;
-            background: #fff;
+            background: #ffffff;
             position: relative;
-            transition: all 0.3s ease;
+            transition: width 0.25s cubic-bezier(0.2, 0, 0, 1), height 0.25s cubic-bezier(0.2, 0, 0, 1);
         }
 
         iframe {
@@ -94,48 +119,116 @@
             display: block;
         }
 
-        /* Floating Fullscreen Close Button */
+        /* PREMIUM TOP-LEFT FLOATING CODE LINE OVERLAY */
+        .line-counter-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(11, 11, 12, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 6px;
+            color: var(--text-main);
+            font-family: ui-monospace, SFMono-Regular, SF Pro Text, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 9999; /* Higher priority layer over everything */
+            pointer-events: none; /* Mouse actions bypass the badge to retain clickable iframe elements underlying */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .line-counter-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--accent-glow);
+        }
+
+        /* Native Fullscreen Escape Button Positioning */
         .exit-fs-btn {
             display: none;
             position: fixed;
-            top: 15px;
-            right: 15px;
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            border: 1px solid #444;
-            padding: 10px 18px;
-            border-radius: 30px;
+            top: 16px;
+            right: 16px;
+            background: rgba(19, 19, 22, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 20px;
             z-index: 10000;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.8rem;
+            letter-spacing: -0.01em;
+            cursor: pointer;
         }
         :fullscreen .exit-fs-btn,
         :-webkit-full-screen .exit-fs-btn {
             display: block;
         }
 
-        /* PC View: Centered Mobile Device Frame Rule Mockup */
+        /* PC View Mockup Wrapper Layout Rules */
         .pc-simulated-phone {
             width: 360px !important;
-            height: 740px !important;
-            border: 12px solid #2d2d34 !important;
-            border-radius: 36px !important;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+            height: 760px !important;
+            border: 10px solid #1c1c1e !important;
+            border-radius: 32px !important;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
             overflow: hidden;
         }
 
-        /* Toast Popup Notice */
+        /* Mobile Landscape Core Tricking Breakouts */
+        @media (max-width: 1024px) {
+            @media (orientation: portrait) {
+                .viewport-shell {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+            }
+
+            @media (orientation: landscape) {
+                .viewport-shell {
+                    width: 1280px !important;
+                    height: 720px !important;
+                    transform: scale(calc(100vw / 1280));
+                    transform-origin: top left;
+                }
+                
+                :fullscreen .viewport-shell,
+                :-webkit-full-screen .viewport-shell {
+                    width: 1280px !important;
+                    height: 720px !important;
+                    transform: scale(calc(100vw / 1280)) !important;
+                    transform-origin: top left !important;
+                }
+            }
+        }
+
+        /* Toast Message Layout */
         .toast {
             position: fixed;
-            bottom: 30px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background-color: #00bfa5;
-            color: #121214;
-            padding: 10px 24px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: transform 0.3s ease;
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+            pointer-events: none;
             z-index: 1000;
         }
         .toast.show { transform: translateX(-50%) translateY(0); }
@@ -143,117 +236,133 @@
 </head>
 <body>
 
-    <header id="main-header">
-        <button class="btn-paste" id="btn-paste">📋 Paste & Full Screen</button>
-        <button id="btn-copy">Copy</button>
-        <button id="pc-mobile-toggle">📱 Switch to Mobile View</button>
+    <header id="control-panel">
+        <button class="control-btn btn-primary" id="btn-paste">Paste & Go Full</button>
+        <button class="control-btn" id="btn-copy">Copy Code</button>
+        <button class="control-btn" id="pc-device-toggle">Simulate Mobile View</button>
     </header>
 
-    <div class="canvas-container" id="app-canvas">
-        <button class="exit-fs-btn" id="exit-fs">❌ Exit Full View</button>
+    <div class="canvas-container" id="fullscreen-root">
+        <div class="line-counter-badge" id="line-counter">0 lines</div>
+
+        <button class="exit-fs-btn" id="exit-fs">Exit Viewport</button>
         
-        <div class="device-wrapper" id="view-shell">
+        <div class="viewport-shell" id="frame-housing">
             <iframe id="preview-frame"></iframe>
         </div>
     </div>
 
-    <div class="toast" id="toast-msg">Active!</div>
+    <div class="toast" id="toast-message">Workspace Synchronized</div>
 
     <script>
         const previewFrame = document.getElementById('preview-frame');
-        const viewShell = document.getElementById('view-shell');
-        const appCanvas = document.getElementById('app-canvas');
+        const frameHousing = document.getElementById('frame-housing');
+        const fullscreenRoot = document.getElementById('fullscreen-root');
+        const lineCounter = document.getElementById('line-counter');
         
         const btnPaste = document.getElementById('btn-paste');
         const btnCopy = document.getElementById('btn-copy');
-        const pcMobileToggle = document.getElementById('pc-mobile-toggle');
+        const pcDeviceToggle = document.getElementById('pc-device-toggle');
         const btnExitFs = document.getElementById('exit-fs');
-        const toast = document.getElementById('toast-msg');
+        const toast = document.getElementById('toast-message');
 
-        let currentActiveCode = localStorage.getItem('saved_html_code') || `<h1>Ready. Paste code.</h1>`;
+        let currentActiveCode = localStorage.getItem('saved_html_code') || `<!DOCTYPE html>
+<html>
+<body>
+    <h2 style="color:#fff; text-align:center; padding-top:40vh; font-family:sans-serif;">No code layers in storage.</h2>
+</body>
+</html>`;
 
-        // The Viewport Injection engine
-        function runCodeEngine() {
-            const doc = previewFrame.contentWindow.document;
-            doc.open();
+        // Calculates exact lines of code and updates indicator badge string
+        function updateLineCountDisplay(codeText) {
+            if (!codeText) {
+                lineCounter.innerText = "0 lines";
+                return;
+            }
+            const linesArray = codeText.split(/\r\n|\r|\n/);
+            lineCounter.innerText = `${linesArray.length} lines`;
+        }
 
-            // Detect if phone is held sideways right now
+        // Active Viewport Code Injection Engine
+        function deployCode() {
             const isLandscape = window.innerWidth > window.innerHeight;
-            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            
+            let sourcePayload = currentActiveCode;
 
-            let configuredCode = currentActiveCode;
+            // Run counter utility update check
+            updateLineCountDisplay(sourcePayload);
 
-            // If it's a mobile device in landscape, force the desktop scaling viewport header metadata
-            if (isMobile && isLandscape) {
-                const desktopViewportMeta = `<meta name="viewport" content="width=1280, initial-scale=0.3, shrink-to-fit=no">`;
-                if (configuredCode.includes('<head>')) {
-                    configuredCode = configuredCode.replace('<head>', `<head>${desktopViewportMeta}`);
+            if (isMobileDevice && isLandscape) {
+                const desktopViewportMeta = '<meta name="viewport" content="width=1280, initial-scale=1.0, shrink-to-fit=no">';
+                if (sourcePayload.includes('<head>')) {
+                    sourcePayload = sourcePayload.replace('<head>', `<head>${desktopViewportMeta}`);
                 } else {
-                    configuredCode = desktopViewportMeta + configuredCode;
+                    sourcePayload = desktopViewportMeta + sourcePayload;
                 }
             } else {
-                // Default responsive mobile layout header metadata rule definition
-                const mobileViewportMeta = `<meta name="viewport" content="width=device-width, initial-scale=1.0">`;
-                if (configuredCode.includes('<head>')) {
-                    configuredCode = configuredCode.replace('<head>', `<head>${mobileViewportMeta}`);
+                const mobileViewportMeta = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+                if (sourcePayload.includes('<head>')) {
+                    sourcePayload = sourcePayload.replace('<head>', `<head>${mobileViewportMeta}`);
                 } else {
-                    configuredCode = mobileViewportMeta + configuredCode;
+                    sourcePayload = mobileViewportMeta + sourcePayload;
                 }
             }
 
-            doc.write(configuredCode);
-            doc.close();
+            const blob = new Blob([sourcePayload], { type: 'text/html;charset=utf-8' });
+            previewFrame.src = URL.createObjectURL(blob);
         }
 
-        function showToast(msg) {
-            toast.innerText = msg;
+        function triggerToastBanner(messageText) {
+            toast.innerText = messageText;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 1500);
         }
 
-        // Environment Detection
-        const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (!isMobileDevice) {
-            pcMobileToggle.style.display = "block";
+        // Initial System Setup Hooks
+        const isMobilePlatform = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (!isMobilePlatform) {
+            pcDeviceToggle.style.display = "block";
         }
 
+        // Paste Command Sequence
         btnPaste.addEventListener('click', async () => {
             try {
-                const text = await navigator.clipboard.readText();
-                if (text) {
-                    currentActiveCode = text;
+                const copiedData = await navigator.clipboard.readText();
+                if (copiedData) {
+                    currentActiveCode = copiedData;
                     localStorage.setItem('saved_html_code', currentActiveCode);
-                    runCodeEngine();
-                    showToast("Code Saved! Going Full Screen...");
+                    deployCode();
+                    triggerToastBanner("Compiled.");
 
-                    if (appCanvas.requestFullscreen) {
-                        appCanvas.requestFullscreen();
-                    } else if (appCanvas.webkitRequestFullscreen) {
-                        appCanvas.webkitRequestFullscreen();
+                    if (fullscreenRoot.requestFullscreen) {
+                        fullscreenRoot.requestFullscreen();
+                    } else if (fullscreenRoot.webkitRequestFullscreen) {
+                        fullscreenRoot.webkitRequestFullscreen();
                     }
                 }
             } catch (err) {
-                alert("Please grant clipboard permissions to auto paste.");
+                alert("Please authorize clipboard sync access permissions.");
             }
         });
 
         btnCopy.addEventListener('click', async () => {
             try {
                 await navigator.clipboard.writeText(currentActiveCode);
-                showToast("Copied to Clipboard!");
+                triggerToastBanner("Copied source code.");
             } catch (err) {
-                showToast("Copy failed.");
+                triggerToastBanner("Transfer error.");
             }
         });
 
-        pcMobileToggle.addEventListener('click', () => {
-            viewShell.classList.toggle('pc-simulated-phone');
-            if (viewShell.classList.contains('pc-simulated-phone')) {
-                pcMobileToggle.classList.add('active');
-                pcMobileToggle.innerText = "💻 Switch to PC View";
+        pcDeviceToggle.addEventListener('click', () => {
+            frameHousing.classList.toggle('pc-simulated-phone');
+            if (frameHousing.classList.contains('pc-simulated-phone')) {
+                pcDeviceToggle.classList.add('active');
+                pcDeviceToggle.innerText = "Switch to PC View";
             } else {
-                pcMobileToggle.classList.remove('active');
-                pcMobileToggle.innerText = "📱 Switch to Mobile View";
+                pcDeviceToggle.classList.remove('active');
+                pcDeviceToggle.innerText = "Simulate Mobile View";
             }
         });
 
@@ -265,11 +374,9 @@
             }
         });
 
-        // Re-inject code automatically when user physically rotates device screen orientation
-        window.addEventListener('resize', runCodeEngine);
-        window.addEventListener('orientationchange', runCodeEngine);
-
-        window.addEventListener('DOMContentLoaded', runCodeEngine);
+        window.addEventListener('resize', deployCode);
+        window.addEventListener('orientationchange', deployCode);
+        window.addEventListener('DOMContentLoaded', deployCode);
     </script>
 </body>
 </html>
