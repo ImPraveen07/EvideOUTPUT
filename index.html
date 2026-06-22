@@ -39,6 +39,14 @@
             font-weight: 700;
         }
 
+        /* --- UI ELEMENTS WITH TRANSITION FOR AUTO-FADE --- */
+        .line-counter-badge, .floating-action-bar, .ui-lock-toggle {
+            transition: opacity 0.5s ease-in-out, transform 0.3s ease, box-shadow 0.3s ease !important;
+        }
+
+        /* Auto-Fade Class */
+        .ui-hidden-idle { opacity: 0.15 !important; }
+
         /* ==========================================================================
            AUTHENTICATION OVERLAY
            ========================================================================== */
@@ -157,14 +165,15 @@
            CORE WORKSPACE ENGINE (CANVAS RENDERING DESK)
            ========================================================================== */
         .workspace-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
         .canvas-container { flex: 1; position: relative; background-color: #0b0b0c; display: flex; align-items: center; justify-content: center; overflow: hidden; border: var(--brutal-border); margin: 12px; background-image: radial-gradient(#3f3f46 2px, transparent 2px), radial-gradient(#3f3f46 2px, transparent 2px); background-size: 40px 40px; background-position: 0 0, 20px 20px; transition: all 0.3s ease; }
         
         .viewport-shell { width: 100%; height: 100%; background: #ffffff; position: relative; opacity: 1; transition: opacity 0.15s ease, width 0.3s cubic-bezier(0.2, 0, 0, 1), height 0.3s cubic-bezier(0.2, 0, 0, 1); border: none; }
         iframe.preview-frame-el { width: 100%; height: 100%; border: none; background-color: #ffffff; display: block; }
 
         /* TOP UI ACTION BARS */
-        .line-counter-badge { position: absolute; top: 16px; left: 16px; background: #000000; border: 2px solid #000; padding: 8px 14px; color: #ffffff; font-size: 0.85rem; font-weight: 900; z-index: 400; box-shadow: 4px 4px 0px var(--brutal-yellow); transition: opacity 0.3s ease; }
-        .floating-action-bar { position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 12px; z-index: 401; transition: opacity 0.3s ease; }
+        .line-counter-badge { position: absolute; top: 16px; left: 16px; background: #000000; border: 2px solid #000; padding: 8px 14px; color: #ffffff; font-size: 0.85rem; font-weight: 900; z-index: 400; box-shadow: 4px 4px 0px var(--brutal-yellow); }
+        .floating-action-bar { position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 12px; z-index: 401; }
         
         .action-circle-btn { background: #ffffff; color: #000; border: var(--brutal-border); height: 44px; padding: 0 18px; font-weight: 900; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: var(--brutal-shadow-sm); font-family: inherit; text-transform: uppercase; transition: all 0.1s; }
         .action-circle-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
@@ -176,7 +185,7 @@
             background: #ffffff; color: #000; border: var(--brutal-border);
             width: 50px; height: 50px; border-radius: 25px; font-size: 1.4rem;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 500; opacity: 0.6; transition: all 0.3s ease;
+            cursor: pointer; z-index: 500; opacity: 0.6; 
             box-shadow: var(--brutal-shadow-sm);
         }
         .ui-lock-toggle:hover { opacity: 1 !important; transform: translateY(-50%) scale(1.1); }
@@ -271,22 +280,28 @@
             if(!cleanUser || cleanUser.length < 3) return { success: false, msg: "Handle error: > 2 chars required." };
             if(!password || password.length < 4) return { success: false, msg: "Key error: > 3 chars required." };
 
+            const deviceId = window.CurrentDeviceFingerprint;
+            const deviceRef = window.FBRef(db, `hardwareDevices/${deviceId}`);
             const userRegistryRef = window.FBRef(db, `users/${cleanUser}`);
-            const checkSnap = await window.FBGet(userRegistryRef);
+            const deviceSnap = await window.FBGet(deviceRef);
 
             if (window.currentAuthMode === 'signup') {
+                if (deviceSnap.exists()) return { success: false, msg: "SECURITY ERROR: This device has already registered an account." };
+                
+                const checkSnap = await window.FBGet(userRegistryRef);
                 if (checkSnap.exists()) return { success: false, msg: "Handle node already taken." };
-                const deviceId = window.CurrentDeviceFingerprint;
-                await window.FBSet(window.FBRef(db, `hardwareDevices/${deviceId}`), { username: cleanUser, linkedAt: Date.now() });
+
+                await window.FBSet(deviceRef, { username: cleanUser, linkedAt: Date.now() });
                 await window.FBSet(userRegistryRef, { hwId: deviceId, password: password, registered: Date.now() });
+                
                 localStorage.removeItem("sync_logged_out");
                 return { success: true, username: cleanUser };
             } else {
+                const checkSnap = await window.FBGet(userRegistryRef);
                 if (!checkSnap.exists()) return { success: false, msg: "Node profile missing." };
                 if (checkSnap.val().password !== password) return { success: false, msg: "Auth passcode mismatch." };
                 
-                const deviceId = window.CurrentDeviceFingerprint;
-                await window.FBSet(window.FBRef(db, `hardwareDevices/${deviceId}`), { username: cleanUser, linkedAt: Date.now() });
+                await window.FBSet(deviceRef, { username: cleanUser, linkedAt: Date.now() });
                 localStorage.removeItem("sync_logged_out");
                 return { success: true, username: cleanUser };
             }
@@ -485,8 +500,6 @@
         const btnSubmitRequest = document.getElementById("btn-submit-request");
 
         // --- UI Interactions ---
-        
-        // Password Eye Toggle
         eyeBtn.addEventListener('click', () => {
             if(authPasswordInput.type === 'password') {
                 authPasswordInput.type = 'text'; eyeBtn.innerText = '🙈';
@@ -495,7 +508,6 @@
             }
         });
 
-        // Middle-Left Fullscreen Lock Toggle
         lockBtn.addEventListener('click', () => {
             isUILocked = !isUILocked;
             if (isUILocked) {
@@ -553,20 +565,33 @@
             triggerToastBanner("Hardware node profile disconnected.");
         });
 
+        // 🚨 FIREBASE SOURCE OF TRUTH OVERRIDE 🚨
         window.bootstrapCoreEcosystem = function(username) {
             currentSystemUser = username || "LOCAL_NODE";
             authOverlay.style.transform = "translateY(-100%)";
             document.getElementById("user-avatar").innerText = currentSystemUser.substr(0,2).toUpperCase();
             document.getElementById("user-display-name").innerText = `@${currentSystemUser}`;
             
-            // STRICT PERSISTENCE RELOAD: Ensure data survives login/logout lifecycle
-            codeHistory = JSON.parse(localStorage.getItem('code_history_stack')) || [];
-            currentActiveIdx = localStorage.getItem('current_active_index') !== null ? parseInt(localStorage.getItem('current_active_index'), 10) : -1;
+            // 🚨 REAL-TIME CLOUD PULL: Auto-syncs everywhere via Token Nodes 🚨
+            window.FBOnValue(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory`), (snap) => {
+                if (snap.exists()) {
+                    const rawData = snap.val();
+                    codeHistory = Object.values(rawData).sort((a, b) => a.timestampEpoch - b.timestampEpoch);
+                    currentActiveIdx = codeHistory.length > 0 ? codeHistory.length - 1 : -1;
+                } else {
+                    codeHistory = [];
+                    currentActiveIdx = -1;
+                }
+
+                localStorage.setItem('code_history_stack', JSON.stringify(codeHistory));
+                localStorage.setItem('current_active_index', currentActiveIdx);
+
+                rebuildHistoryTimelineDOM();
+                renderActiveCanvasContent();
+            });
             
             window.initializeSystemSync(currentSystemUser);
             initializeGlobalP2PListeners();
-            rebuildHistoryTimelineDOM();
-            renderActiveCanvasContent();
         };
 
         function generateUniqueLayerToken() {
@@ -621,19 +646,13 @@
                 code: injectedCode, timestamp: timestampStr, token: layerToken, owner: currentSystemUser || "LOCAL_NODE", timestampEpoch: Date.now()
             };
             
-            codeHistory.push(historyRecord);
-            currentActiveIdx = codeHistory.length - 1;
-            
-            localStorage.setItem('code_history_stack', JSON.stringify(codeHistory));
-            localStorage.setItem('current_active_index', currentActiveIdx);
-
             if(window.FirebaseDB && currentSystemUser) {
+                // Uploads directly to Cloud DB. FBOnValue listener automatically draws it locally.
                 window.FBSet(window.FBRef(window.FirebaseDB, `globalLayers/${layerToken.replace('#','')}`), historyRecord);
+                window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${layerToken.replace('#','')}`), historyRecord);
             }
             
             pasteGatewayInput.value = ""; 
-            rebuildHistoryTimelineDOM();
-            renderActiveCanvasContent();
             triggerToastBanner("Layer Compiled & Broadcasted.");
             
             if (goFullscreen) triggerHardwareFullscreen();
@@ -691,19 +710,10 @@
         // --- BULLETPROOF P2P DATA REVOCATION ENGINE ---
         window.removeRevokedPeerLayer = function(token) {
             if (!token) return;
-            const initialLen = codeHistory.length;
-            codeHistory = codeHistory.filter(item => item.token !== token);
-            
-            localStorage.removeItem(`peer_layer_${token.replace('#','')}`);
-            localStorage.setItem('code_history_stack', JSON.stringify(codeHistory));
-            
-            if(codeHistory.length < initialLen) {
-                if(currentActiveIdx >= codeHistory.length) {
-                    currentActiveIdx = codeHistory.length > 0 ? codeHistory.length - 1 : -1;
-                }
-                localStorage.setItem('current_active_index', currentActiveIdx);
-                rebuildHistoryTimelineDOM();
-                renderActiveCanvasContent();
+            if(window.FirebaseDB && currentSystemUser) {
+                // 🚨 Explicitly deletes token from cloud, triggering automatic local purge 🚨
+                window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${token.replace('#','')}`), null);
+                localStorage.removeItem(`peer_layer_${token.replace('#','')}`);
                 triggerToastBanner("PEER ACCESS REVOKED. DATA PURGED.");
             }
         }
@@ -722,7 +732,7 @@
             btnSubmitRequest.disabled = true;
         });
 
-        // Search Layer (Privacy Lock Enforced - No actionability)
+        // Search Layer (Privacy Lock Enforced)
         layerSearchInput.addEventListener('input', async () => {
             const rawToken = layerSearchInput.value.trim().toUpperCase().replace('#','');
             if(rawToken.length < 7) { 
@@ -785,7 +795,6 @@
         function initializeGlobalP2PListeners() {
             if(!window.FirebaseDB || !currentSystemUser) return;
             
-            // Monitor Inbound Requests & Setup Notification Badge
             window.FBOnValue(window.FBRef(window.FirebaseDB, `requests/${currentSystemUser}/inbound`), (snapshot) => {
                 const pendingCont = document.getElementById("incoming-pending-queue"); 
                 const approvedCont = document.getElementById("incoming-approved-queue"); 
@@ -826,7 +835,6 @@
                 }
             });
 
-            // Monitor Outbound Request Status (Peer checking if they got approved or revoked)
             window.FBOnValue(window.FBRef(window.FirebaseDB, `requests/${currentSystemUser}/outbound`), (snapshot) => {
                 const pendingCont = document.getElementById("outbound-pending-queue"); 
                 const approvedCont = document.getElementById("outbound-approved-queue"); 
@@ -834,7 +842,6 @@
                 if(!snapshot.exists()) return;
                 
                 Object.values(snapshot.val()).forEach(req => {
-                    // IF REVOKED: Immediately destroy local payload and delete firebase record
                     if(req.status === 'revoked') {
                         window.removeRevokedPeerLayer(req.token);
                         window.FBSet(window.FBRef(window.FirebaseDB, `requests/${currentSystemUser}/outbound/${req.reqId}`), null);
@@ -855,21 +862,19 @@
                             <div class="card-row-item"><small style="font-weight:900;">TOKEN SYNC: ${req.token}</small></div>`;
                         approvedCont.appendChild(card);
 
-                        // Securely insert code using Approved Time Stamp
                         const k = `peer_layer_${req.token.replace('#','')}`;
                         if(!localStorage.getItem(k)) {
                             localStorage.setItem(k, "injected");
                             const accTime = new Date();
                             const acceptedTimestampStr = `${accTime.getMonth() + 1}/${accTime.getDate()} ${accTime.getHours().toString().padStart(2, '0')}:${accTime.getMinutes().toString().padStart(2, '0')}`;
 
-                            codeHistory.push({ 
+                            const peerRecord = { 
                                 code: req.code, timestamp: acceptedTimestampStr, token: req.token, 
                                 owner: `(PEER) ${safeTarget}`, timestampEpoch: Date.now() 
-                            });
-                            currentActiveIdx = codeHistory.length - 1;
-                            localStorage.setItem('code_history_stack', JSON.stringify(codeHistory));
-                            localStorage.setItem('current_active_index', currentActiveIdx);
-                            rebuildHistoryTimelineDOM(); renderActiveCanvasContent();
+                            };
+                            
+                            // 🚨 Automatically sync approved peer code directly into Cloud DB 🚨
+                            window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${req.token.replace('#','')}`), peerRecord);
                             triggerToastBanner("EXTERNAL PEER LAYER RECEIVED & MERGED");
                         }
                     }
@@ -877,12 +882,9 @@
             });
         }
 
-        // Global Execution Handler for Approval/Drops/Revokes
-        // Element is passed to optimistically render the deletion instantly
         window.executeLeaseResponse = function(reqId, requester, finalStatus, element) {
             if(!window.FirebaseDB) return;
             
-            // Instantly wipe from UI for snappy ghost-free feel
             if (element) {
                 const card = element.closest('.request-item-card');
                 if(card) card.remove();
@@ -898,8 +900,8 @@
                 window.FBSet(inRef, null); 
                 window.FBSet(outStatusRef, 'denied'); 
             } else if(finalStatus === 'revoked') {
-                window.FBSet(inRef, null); // Clear from owner DB completely
-                window.FBSet(outStatusRef, 'revoked'); // Command peer client to self-destruct payload
+                window.FBSet(inRef, null); 
+                window.FBSet(outStatusRef, 'revoked'); 
             }
             triggerToastBanner(`TUNNEL STATUS: ${finalStatus.toUpperCase()}`);
         };
@@ -922,13 +924,34 @@
 
         window.addEventListener('DOMContentLoaded', () => { 
             syncIphoneSkinView(); 
-            if(localStorage.getItem('sync_logged_out') === 'true') { 
-                // Pull from history explicitly if loading in default mode
-                codeHistory = JSON.parse(localStorage.getItem('code_history_stack')) || [];
-                currentActiveIdx = localStorage.getItem('current_active_index') !== null ? parseInt(localStorage.getItem('current_active_index'), 10) : -1;
-                renderActiveCanvasContent(); rebuildHistoryTimelineDOM(); 
-            }
         });
+
+        // --- AUTO-FADE IDLE CONTROLLER ---
+        let idleTimer;
+        const uiElements = [
+            document.getElementById('line-counter'),
+            document.querySelector('.floating-action-bar'),
+            document.getElementById('ui-lock-btn')
+        ];
+
+        function showUI() {
+            uiElements.forEach(el => { if(el) el.classList.remove('ui-hidden-idle'); });
+            resetIdleTimer();
+        }
+
+        function resetIdleTimer() {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                if (!isUILocked) {
+                    uiElements.forEach(el => { if(el) el.classList.add('ui-hidden-idle'); });
+                }
+            }, 2000); 
+        }
+
+        ['mousemove', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, showUI, { passive: true });
+        });
+
     </script>
 </body>
 </html>
