@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Intelligent Viewport Runner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #09090a;
+            color: #e1e1e6;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Action Panel Bar */
+        header {
+            background-color: #1e1e24;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #29292e;
+            height: 50px;
+            z-index: 100;
+        }
+
+        button {
+            background-color: #29292e;
+            color: #fff;
+            border: 1px solid #323238;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:active { transform: scale(0.96); }
+
+        .btn-paste {
+            background: #00bfa5;
+            color: #121214;
+            border: none;
+        }
+
+        #pc-mobile-toggle {
+            display: none; /* Only managed on real computer screens */
+            margin-left: auto;
+            background-color: #3e3e4a;
+            border-color: #525266;
+        }
+        #pc-mobile-toggle.active {
+            background: #00bfa5;
+            color: #121214;
+            border-color: #00bfa5;
+        }
+
+        /* Complete Edge-to-Edge Output Panel Workspace */
+        .canvas-container {
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 50px);
+            position: relative;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .device-wrapper {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #ffffff;
+            display: block;
+        }
+
+        /* Floating Fullscreen Close Button */
+        .exit-fs-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 18px;
+            border-radius: 30px;
+            z-index: 10000;
+            font-weight: bold;
+        }
+        :fullscreen .exit-fs-btn,
+        :-webkit-full-screen .exit-fs-btn {
+            display: block;
+        }
+
+        /* PC View: Centered Mobile Device Frame Rule Mockup */
+        .pc-simulated-phone {
+            width: 360px !important;
+            height: 740px !important;
+            border: 12px solid #2d2d34 !important;
+            border-radius: 36px !important;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        /* Toast Popup Notice */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #00bfa5;
+            color: #121214;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <header id="main-header">
+        <button class="btn-paste" id="btn-paste">📋 Paste & Full Screen</button>
+        <button id="btn-copy">Copy</button>
+        <button id="pc-mobile-toggle">📱 Switch to Mobile View</button>
+    </header>
+
+    <div class="canvas-container" id="app-canvas">
+        <button class="exit-fs-btn" id="exit-fs">❌ Exit Full View</button>
+        
+        <div class="device-wrapper" id="view-shell">
+            <iframe id="preview-frame"></iframe>
+        </div>
+    </div>
+
+    <div class="toast" id="toast-msg">Active!</div>
+
+    <script>
+        const previewFrame = document.getElementById('preview-frame');
+        const viewShell = document.getElementById('view-shell');
+        const appCanvas = document.getElementById('app-canvas');
+        
+        const btnPaste = document.getElementById('btn-paste');
+        const btnCopy = document.getElementById('btn-copy');
+        const pcMobileToggle = document.getElementById('pc-mobile-toggle');
+        const btnExitFs = document.getElementById('exit-fs');
+        const toast = document.getElementById('toast-msg');
+
+        let currentActiveCode = localStorage.getItem('saved_html_code') || `<h1>Ready. Paste code.</h1>`;
+
+        // The Viewport Injection engine
+        function runCodeEngine() {
+            const doc = previewFrame.contentWindow.document;
+            doc.open();
+
+            // Detect if phone is held sideways right now
+            const isLandscape = window.innerWidth > window.innerHeight;
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            let configuredCode = currentActiveCode;
+
+            // If it's a mobile device in landscape, force the desktop scaling viewport header metadata
+            if (isMobile && isLandscape) {
+                const desktopViewportMeta = `<meta name="viewport" content="width=1280, initial-scale=0.3, shrink-to-fit=no">`;
+                if (configuredCode.includes('<head>')) {
+                    configuredCode = configuredCode.replace('<head>', `<head>${desktopViewportMeta}`);
+                } else {
+                    configuredCode = desktopViewportMeta + configuredCode;
+                }
+            } else {
+                // Default responsive mobile layout header metadata rule definition
+                const mobileViewportMeta = `<meta name="viewport" content="width=device-width, initial-scale=1.0">`;
+                if (configuredCode.includes('<head>')) {
+                    configuredCode = configuredCode.replace('<head>', `<head>${mobileViewportMeta}`);
+                } else {
+                    configuredCode = mobileViewportMeta + configuredCode;
+                }
+            }
+
+            doc.write(configuredCode);
+            doc.close();
+        }
+
+        function showToast(msg) {
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 1500);
+        }
+
+        // Environment Detection
+        const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (!isMobileDevice) {
+            pcMobileToggle.style.display = "block";
+        }
+
+        btnPaste.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    currentActiveCode = text;
+                    localStorage.setItem('saved_html_code', currentActiveCode);
+                    runCodeEngine();
+                    showToast("Code Saved! Going Full Screen...");
+
+                    if (appCanvas.requestFullscreen) {
+                        appCanvas.requestFullscreen();
+                    } else if (appCanvas.webkitRequestFullscreen) {
+                        appCanvas.webkitRequestFullscreen();
+                    }
+                }
+            } catch (err) {
+                alert("Please grant clipboard permissions to auto paste.");
+            }
+        });
+
+        btnCopy.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(currentActiveCode);
+                showToast("Copied to Clipboard!");
+            } catch (err) {
+                showToast("Copy failed.");
+            }
+        });
+
+        pcMobileToggle.addEventListener('click', () => {
+            viewShell.classList.toggle('pc-simulated-phone');
+            if (viewShell.classList.contains('pc-simulated-phone')) {
+                pcMobileToggle.classList.add('active');
+                pcMobileToggle.innerText = "💻 Switch to PC View";
+            } else {
+                pcMobileToggle.classList.remove('active');
+                pcMobileToggle.innerText = "📱 Switch to Mobile View";
+            }
+        });
+
+        btnExitFs.addEventListener('click', () => {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        });
+
+        // Re-inject code automatically when user physically rotates device screen orientation
+        window.addEventListener('resize', runCodeEngine);
+        window.addEventListener('orientationchange', runCodeEngine);
+
+        window.addEventListener('DOMContentLoaded', runCodeEngine);
+    </script>
+</body>
+</html>
