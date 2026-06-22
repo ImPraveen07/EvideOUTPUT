@@ -2,381 +2,820 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Core Canvas Sandbox</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Galatta Arena | Premium Tournament Engine</title>
+    <!-- Premium Global Tech Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* =========================================
+           PREMIUM LIGHT & ATTRACTION DESIGN SYSTEM
+           ========================================= */
         :root {
-            --bg-main: #0b0b0c;
-            --bg-panel: #131316;
-            --bg-element: #1c1c21;
-            --border-color: #26262b;
-            --accent-glow: #00f5d4;
-            --text-main: #f4f4f6;
-            --text-muted: #8a8a93;
+            --bg-base: #F8FAFC;
+            --bg-surface: #FFFFFF;
+            --bg-surface-elevated: #F1F5F9;
+            
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --text-crisp: #475569;
+            
+            /* Premium Attraction Accent (Deep Indigo & Luxury Violet Ambiance) */
+            --accent-primary: #6366F1;        
+            --accent-primary-gradient: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            --accent-gold: #D97706;           
+            --accent-purple: #7C3AED;         
+            --accent-blue: #2563EB;           
+            
+            --border-subtle: #E2E8F0;
+            --border-active: #CBD5E1;
+            --border-focus: #6366F1;
+            
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 30px;
+            
+            --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+            --shadow-lg: 0 20px 40px -10px rgba(15, 23, 42, 0.08);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-base);
             color: var(--text-main);
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
+            overflow-x: hidden;
+            min-height: 100vh;
+            letter-spacing: -0.01em;
+        }
+
+        /* Custom Fine Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        h1, h2, h3, h4 { 
+            font-weight: 700; 
+            letter-spacing: -0.02em; 
+        }
+
+        /* Clean Premium Panels */
+        .premium-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition-smooth);
+        }
+
+        .premium-interactive:hover {
+            border-color: var(--border-active);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Form Inputs */
+        .input-group { 
+            position: relative; 
+            margin-bottom: 1.25rem; 
+            text-align: left; 
+        }
+        
+        .input-group label { 
+            display: block; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            margin-bottom: 0.5rem; 
+            text-transform: uppercase; 
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+        
+        .input-group select, .input-group input {
+            width: 100%; 
+            background: var(--bg-base); 
+            border: 1px solid var(--border-subtle);
+            padding: 0.85rem 1.1rem; 
+            border-radius: var(--radius-md); 
+            color: var(--text-main);
+            font-family: inherit; 
+            font-size: 0.95rem; 
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            outline: none;
+        }
+        
+        .input-group select:focus, .input-group input:focus {
+            border-color: var(--border-focus);
+            background: var(--bg-surface);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Control Buttons */
+        .premium-btn {
+            background: var(--accent-primary-gradient);
+            color: #FFFFFF;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.9rem 1.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: inline-flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+        }
+
+        .premium-btn:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-crisp);
+            padding: 0.85rem; 
+            font-size: 0.9rem; 
+            border-radius: var(--radius-md);
+            cursor: pointer; 
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+        
+        .btn-secondary:hover { 
+            background: var(--border-subtle);
+            color: var(--text-main);
+        }
+
+        /* Token Display Classes */
+        .token-card {
+            width: 100%;
+            min-width: 160px;
+            padding: 1.25rem;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
             display: flex;
             flex-direction: column;
-        }
-
-        /* Top Panel Bar */
-        header {
-            background-color: var(--bg-panel);
-            padding: 0 16px;
-            display: flex;
             align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid var(--border-color);
-            height: 48px;
-            z-index: 100;
-        }
-
-        .control-btn {
-            background-color: var(--bg-element);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 6px 14px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            letter-spacing: -0.01em;
-            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.12s cubic-bezier(0.2, 0, 0, 1);
+            transition: var(--transition-smooth);
         }
-
-        .control-btn:hover {
-            background-color: #222229;
-            border-color: #31313a;
+        
+        .token-badge-icon {
+            font-size: 1.35rem;
+            margin-bottom: 0.35rem;
         }
-
-        .control-btn:active {
-            transform: scale(0.97);
-            background-color: #18181c;
+        
+        .token-value-display { 
+            font-size: 1.4rem; 
+            font-weight: 700; 
+            color: var(--text-main); 
         }
-
-        .btn-primary {
-            background: var(--text-main);
-            color: var(--bg-main);
-            border: none;
+        
+        .token-tag-lbl {
+            font-size: 0.7rem;
             font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.35rem;
         }
 
-        .btn-primary:hover {
-            background: #e4e4e7;
+        .token-card:hover { 
+            background: var(--bg-surface);
+            border-color: var(--text-muted);
+            box-shadow: var(--shadow-sm);
         }
 
-        #pc-device-toggle {
-            display: none;
-            margin-left: auto;
-            border-color: var(--border-color);
+        /* =========================================
+           LAYOUT STRUCUTRE & CONFIGURATION
+           ========================================= */
+        #authWrapper { 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 1.5rem; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 2000; 
+            background-color: var(--bg-base); 
         }
-        #pc-device-toggle.active {
-            border-color: var(--accent-glow);
-            box-shadow: 0 0 10px rgba(0, 245, 212, 0.15);
+        
+        .auth-card { 
+            width: 100%; 
+            max-width: 400px; 
+            padding: 2.5rem; 
+            text-align: center;
+            box-shadow: var(--shadow-lg);
         }
-
-        /* Workspace Canvas Container */
-        .canvas-container {
-            flex: 1;
-            width: 100%;
-            height: calc(100vh - 48px);
-            position: relative;
-            background-color: var(--bg-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        /* High-Fidelity App Shell Frame */
-        .viewport-shell {
-            width: 100%;
-            height: 100%;
-            background: #ffffff;
-            position: relative;
-            transition: width 0.25s cubic-bezier(0.2, 0, 0, 1), height 0.25s cubic-bezier(0.2, 0, 0, 1);
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background-color: #ffffff;
-            display: block;
+        
+        #mainHub { 
+            display: none; 
+            opacity: 0; 
+            padding-top: 86px; 
+            padding-bottom: 90px; /* Space for Bottom Nav Bar */
+            transition: opacity 0.4s ease;
         }
 
-        /* PREMIUM TOP-LEFT FLOATING CODE LINE OVERLAY */
-        .line-counter-badge {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            background: rgba(11, 11, 12, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 12px;
-            border-radius: 6px;
-            color: var(--text-main);
-            font-family: ui-monospace, SFMono-Regular, SF Pro Text, Menlo, Monaco, Consolas, monospace;
-            font-size: 0.75rem;
-            font-weight: 600;
-            z-index: 9999; /* Higher priority layer over everything */
-            pointer-events: none; /* Mouse actions bypass the badge to retain clickable iframe elements underlying */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        /* Top Header Navigation */
+        nav {
+            position: fixed; 
+            top: 0; width: 100%; height: 70px; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center; padding: 0 5%;
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .brand { 
+            font-size: 1.2rem; 
+            font-weight: 800; 
             letter-spacing: -0.02em;
-        }
-
-        .line-counter-badge::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background-color: var(--accent-glow);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--accent-glow);
-        }
-
-        /* Native Fullscreen Escape Button Positioning */
-        .exit-fs-btn {
-            display: none;
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            background: rgba(19, 19, 22, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             color: var(--text-main);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 20px;
-            z-index: 10000;
-            font-weight: 600;
-            font-size: 0.8rem;
-            letter-spacing: -0.01em;
-            cursor: pointer;
-        }
-        :fullscreen .exit-fs-btn,
-        :-webkit-full-screen .exit-fs-btn {
-            display: block;
         }
 
-        /* PC View Mockup Wrapper Layout Rules */
-        .pc-simulated-phone {
-            width: 360px !important;
-            height: 760px !important;
-            border: 10px solid #1c1c1e !important;
-            border-radius: 32px !important;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-            overflow: hidden;
-        }
-
-        /* Mobile Landscape Core Tricking Breakouts */
-        @media (max-width: 1024px) {
-            @media (orientation: portrait) {
-                .viewport-shell {
-                    width: 100% !important;
-                    height: 100% !important;
-                }
-            }
-
-            @media (orientation: landscape) {
-                .viewport-shell {
-                    width: 1280px !important;
-                    height: 720px !important;
-                    transform: scale(calc(100vw / 1280));
-                    transform-origin: top left;
-                }
-                
-                :fullscreen .viewport-shell,
-                :-webkit-full-screen .viewport-shell {
-                    width: 1280px !important;
-                    height: 720px !important;
-                    transform: scale(calc(100vw / 1280)) !important;
-                    transform-origin: top left !important;
-                }
-            }
-        }
-
-        /* Toast Message Layout */
-        .toast {
+        /* =========================================
+           PREMIUM BOTTOM NAVIGATION DECK
+           ========================================= */
+        .premium-bottom-bar {
             position: fixed;
             bottom: 24px;
             left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-            pointer-events: none;
+            transform: translateX(-50%);
+            width: calc(100% - 48px);
+            max-width: 500px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.12);
             z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 1rem;
         }
-        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+            gap: 2px;
+            cursor: pointer;
+            height: 100%;
+            width: 60px;
+        }
+
+        .bottom-nav-item svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
+            transition: var(--transition-smooth);
+        }
+
+        .bottom-nav-item.active {
+            color: var(--accent-primary);
+        }
+
+        .bottom-nav-item.active svg {
+            transform: translateY(-2px);
+        }
+
+        /* Hub Layout Blocks */
+        .hub-section { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 1.5rem 5% 3rem; 
+        }
+        
+        .matrix-dashboard-panel {
+            padding: 1.5rem; 
+            margin-bottom: 2rem; 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 1.25rem;
+        }
+        
+        .matrix-header-row { 
+            grid-column: 1 / -1; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 1rem; 
+            background: var(--bg-base); 
+            padding: 0.85rem 1.25rem; 
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+        }
+        
+        .matrix-header-row h3 { 
+            font-size: 0.8rem; 
+            color: var(--text-crisp); 
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        
+        .secure-status-tag { 
+            background: #EFF6FF; 
+            color: var(--accent-blue); 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            padding: 0.35rem 0.75rem; 
+            border-radius: 8px; 
+            border: 1px solid rgba(37, 99, 235, 0.1);
+        }
+
+        /* Rounded Segment Tab Controls */
+        .tab-controls { 
+            display: flex; 
+            justify-content: center; 
+            gap: 0.25rem; 
+            margin: 0 auto 2rem; 
+            padding: 0.3rem; 
+            background: var(--bg-surface); 
+            border: 1px solid var(--border-subtle);
+            width: fit-content; 
+            flex-wrap: wrap; 
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .tab-btn { 
+            background: transparent; 
+            border: none; 
+            color: var(--text-muted); 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            padding: 0.65rem 1.5rem; 
+            cursor: pointer; 
+            border-radius: var(--radius-xl); 
+            transition: var(--transition-smooth); 
+        }
+        
+        .tab-btn.active { 
+            background: var(--text-main); 
+            color: var(--bg-surface); 
+        }
+
+        .calculator-config-bar { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 1.5rem; 
+            padding: 1.5rem; 
+            margin-bottom: 2rem; 
+        }
+        
+        .game-header-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 2rem; 
+            margin-bottom: 2.5rem; 
+        }
+
+        .intel-card { 
+            padding: 2rem; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
+            gap: 1.5rem; 
+        }
+        
+        .intel-card h2 { 
+            font-size: 1.4rem; 
+            color: var(--text-main);
+        }
+        
+        .room-progress-text {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .prize-matrix { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 1rem; 
+            margin-top: 0.5rem; 
+        }
+        
+        .prize-rank-card { 
+            border: 1px solid var(--border-subtle); 
+            border-radius: var(--radius-md); 
+            padding: 1.25rem; 
+            text-align: center; 
+            background: var(--bg-base); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        .rank-lbl { 
+            font-size: 0.75rem; 
+            margin-bottom: 0.25rem; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            color: var(--text-muted);
+        }
+
+        /* Bracket Components */
+        .bracket-wrapper { 
+            overflow-x: auto; 
+            padding: 2rem; 
+            display: flex; 
+            align-items: center; 
+            background: var(--bg-surface);
+        }
+        
+        .bracket-container { 
+            display: flex; 
+            min-width: 100%; 
+            gap: 2rem; 
+            width: 100%; 
+            justify-content: center; 
+        }
+        
+        .round { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.25rem; 
+            flex: 1; 
+            max-width: 300px;
+        }
+        
+        .round-title { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            margin-bottom: 0.25rem; 
+            text-align: center; 
+            color: var(--text-muted);
+        }
+        
+        .match { 
+            border: 1px solid var(--border-subtle); 
+            border-radius: var(--radius-md); 
+            background: var(--bg-base); 
+            overflow: hidden; 
+        }
+        
+        .competitor { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 0.85rem 1rem; 
+            font-weight: 600; 
+            font-size: 0.85rem;
+            color: var(--text-crisp);
+        }
+        
+        .competitor.seed-winner { 
+            background: rgba(99, 102, 241, 0.06); 
+            color: var(--accent-primary);
+            border-left: 3px solid var(--accent-primary);
+        }
+        
+        .competitor:first-child { 
+            border-bottom: 1px solid var(--border-subtle); 
+        }
+
+        #toastContainer { 
+            position: fixed; 
+            bottom: 100px; 
+            right: 30px; 
+            z-index: 4000; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.5rem; 
+            pointer-events: none; 
+        }
+        
+        .toast-banner { 
+            background: var(--text-main); 
+            border-radius: var(--radius-md); 
+            padding: 0.85rem 1.4rem; 
+            font-weight: 500; 
+            font-size: 0.9rem; 
+            color: var(--bg-surface);
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.2s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media (max-width: 1024px) {
+            .game-header-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .calculator-config-bar { grid-template-columns: 1fr; }
+            .premium-bottom-bar { bottom: 16px; }
+        }
     </style>
 </head>
 <body>
 
-    <header id="control-panel">
-        <button class="control-btn btn-primary" id="btn-paste">Paste & Go Full</button>
-        <button class="control-btn" id="btn-copy">Copy Code</button>
-        <button class="control-btn" id="pc-device-toggle">Simulate Mobile View</button>
-    </header>
-
-    <div class="canvas-container" id="fullscreen-root">
-        <div class="line-counter-badge" id="line-counter">0 lines</div>
-
-        <button class="exit-fs-btn" id="exit-fs">Exit Viewport</button>
-        
-        <div class="viewport-shell" id="frame-housing">
-            <iframe id="preview-frame"></iframe>
+    <!-- SECURE IDENTITY GATE -->
+    <div id="authWrapper">
+        <div class="premium-panel auth-card">
+            <div style="margin-bottom: 2rem;">
+                <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">GALATTA SYSTEM V4</h1>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Enterprise Tournament Engine</p>
+            </div>
+            
+            <div class="input-group">
+                <label>System Admin Profile</label>
+                <input type="text" id="usernameField" placeholder="Enter Identity Token">
+            </div>
+            
+            <div class="input-group">
+                <label>Security Phase Key</label>
+                <input type="password" id="passwordField" placeholder="••••••••">
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 2rem;">
+                <button type="button" class="premium-btn" onclick="executeLogin()">INITIALIZE HUB DECK</button>
+                <button type="button" class="btn-secondary" onclick="triggerAutoFill()">RUN SPEED AUTO-FILL</button>
+            </div>
         </div>
     </div>
 
-    <div class="toast" id="toast-message">Workspace Synchronized</div>
+    <!-- MAIN ENGINE DESKTOP & MOBILE CONSOLE -->
+    <div id="mainHub">
+        <nav>
+            <div class="brand">GALATTA COMMAND</div>
+            <button class="btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.8rem;" onclick="logout()">LOGOUT</button>
+        </nav>
 
+        <!-- ATTRACTIVE FLOATING BOTTOM NAVIGATION BAR -->
+        <div class="premium-bottom-bar">
+            <a class="bottom-nav-item active" onclick="showToastMessage('Main Engine Workspace Active')">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Console</span>
+            </a>
+            <a class="bottom-nav-item" onclick="showToastMessage('Matches Database Locked Under Protocol')">
+                <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <span>Matches</span>
+            </a>
+            <a class="bottom-nav-item" onclick="showToastMessage('Financial Ledgers Audited Securely')">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <span>Ledger</span>
+            </a>
+        </div>
+
+        <section class="hub-section">
+            <!-- ENGINE SYSTEM BALANCE DECK -->
+            <div class="premium-panel matrix-dashboard-panel" id="adminPanelBlock">
+                <div class="matrix-header-row">
+                    <h3>PROMOTER ENGINE MATRIX (₹5 SPLIT / 50 BONUS MATRIX)</h3>
+                    <div id="cashbackGlobalAlert" class="secure-status-tag">SECURE PROFIT SYSTEM</div>
+                </div>
+                
+                <div class="token-card">
+                    <span class="token-badge-icon" style="color: var(--text-muted);">📊</span>
+                    <div id="coinGrossContainer" class="token-value-display">--</div>
+                    <span class="token-tag-lbl">Gross Income</span>
+                </div>
+                
+                <div class="token-card">
+                    <span class="token-badge-icon" style="color: var(--accent-primary);">🏆</span>
+                    <div id="coinPoolContainer" class="token-value-display">--</div>
+                    <span class="token-tag-lbl">Total Prize Pool</span>
+                </div>
+
+                <div class="token-card">
+                    <span class="token-badge-icon" style="color: var(--accent-blue);">🏛️</span>
+                    <div id="coinAdminContainer" class="token-value-display">--</div>
+                    <span class="token-tag-lbl">Admin Net Payout</span>
+                </div>
+
+                <div class="token-card">
+                    <span class="token-badge-icon" style="color: var(--accent-gold);">💼</span>
+                    <div id="coinPromoterContainer" class="token-value-display">--</div>
+                    <span class="token-tag-lbl">Promoters Share</span>
+                </div>
+
+                <div class="token-card">
+                    <span class="token-badge-icon" style="color: var(--accent-purple);">🎁</span>
+                    <div id="coinUserBonusContainer" class="token-value-display">--</div>
+                    <span class="token-tag-lbl">User App Bonus</span>
+                </div>
+            </div>
+
+            <!-- TAB CONTROLS -->
+            <div class="tab-controls">
+                <button class="tab-btn active" id="btn-tab-freefire" onclick="switchTab('freefire')">Free Fire 1v1</button>
+                <button class="tab-btn" id="btn-tab-minimilitia8" onclick="switchTab('minimilitia8')">Mini Militia 8P</button>
+                <button class="tab-btn" id="btn-tab-minimilitia12" onclick="switchTab('minimilitia12')">Mini Militia 12P</button>
+                <button class="tab-btn" id="btn-tab-bgmi" onclick="switchTab('bgmi')">BGMI Solo</button>
+            </div>
+
+            <!-- CONFIGURATION MATRICES -->
+            <div class="premium-panel calculator-config-bar premium-interactive">
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>Lobby Target Slots</label>
+                    <select id="slotConfigSelector" onchange="runLiveCalculations()"></select>
+                </div>
+                <div class="input-group" style="margin-bottom:0;">
+                    <label>Dynamic Entry Fee Matrix</label>
+                    <select id="feeConfigSelector" onchange="runLiveCalculations()">
+                        <option value="35">₹35 (Base ₹30 + ₹5 Promo Split)</option>
+                        <option value="55">₹55 (Base ₹50 + ₹5 Promo Split)</option>
+                        <option value="105" selected>₹105 (Base ₹100 + ₹5 Promo Split)</option>
+                        <option value="205">₹205 (Base ₹200 + ₹5 Promo Split)</option>
+                        <option value="505">₹505 (Base ₹500 + ₹5 Promo Split)</option>
+                        <option value="1005">₹1005 (Base ₹1000 + ₹5 Promo Split)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TOURNAMENT BRACKETING AND RANKING DATA -->
+            <div class="game-header-grid">
+                <div class="premium-panel intel-card premium-interactive">
+                    <div>
+                        <h2 id="activeGameTitle">FREE FIRE 1VS1</h2>
+                        <div style="margin-top: 0.75rem;">
+                            <div class="room-progress-text">
+                                <span>Lobby Threshold Validation</span>
+                                <span id="progressPercentLabel" style="font-weight: 700; color: var(--text-main);">100% Filled</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prize-matrix">
+                        <div class="prize-rank-card">
+                            <div class="rank-lbl">🥇 1st Champion Payout</div>
+                            <div id="coinRank1Container" style="font-weight: 700; color: var(--text-main);">--</div>
+                        </div>
+                        <div class="prize-rank-card">
+                            <div class="rank-lbl">🥈 2nd Runner-Up Payout</div>
+                            <div id="coinRank2Container" style="font-weight: 700; color: var(--text-main);">--</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="premium-panel bracket-wrapper premium-interactive" id="bracketSliderDeck">
+                    <div class="bracket-container" id="bracketDynamicInject"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <!-- CORE BUSINESS CALCULATION CALCULATOR ENGINE -->
     <script>
-        const previewFrame = document.getElementById('preview-frame');
-        const frameHousing = document.getElementById('frame-housing');
-        const fullscreenRoot = document.getElementById('fullscreen-root');
-        const lineCounter = document.getElementById('line-counter');
+        let currentActiveTab = 'freefire';
+        const RUPEE_TO_GCOIN = 10;
+
+        const gameData = {
+            freefire: { title: 'FREE FIRE 1VS1', slots: [2, 4, 8, 100] },
+            minimilitia8: { title: 'MINI MILITIA 8P', slots: [8, 16, 32, 100] },
+            minimilitia12: { title: 'MINI MILITIA 12P', slots: [12, 24, 48, 100] },
+            bgmi: { title: 'BGMI SOLO ARENA', slots: [16, 32, 64, 100] }
+        };
+
+        function generateBrutalCoinMarkup(gcoinValue, labelTag, originalRupeeVal, isVirtual = false) {
+            const formattedCoins = Math.round(gcoinValue).toLocaleString();
+            if (isVirtual) {
+                return `${formattedCoins} <span style="font-size:0.8rem; color:var(--text-muted); font-weight:500;">GC</span>`;
+            } else {
+                return `⬡ ${formattedCoins} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">(Core ₹${originalRupeeVal.toFixed(0)})</span>`;
+            }
+        }
+
+        function showToastMessage(msg) {
+            const tc = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast-banner';
+            toast.innerText = msg;
+            tc.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 2500);
+        }
+
+        function triggerAutoFill() {
+            document.getElementById('usernameField').value = 'Admin_Praveen';
+            document.getElementById('passwordField').value = 'WIN_WIN_PROTOCOL';
+            showToastMessage('Admin Access Profile Pre-loaded');
+        }
+
+        function executeLogin() {
+            document.getElementById('authWrapper').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('authWrapper').style.display = 'none';
+                document.getElementById('mainHub').style.display = 'block';
+                setTimeout(() => { document.getElementById('mainHub').style.opacity = '1'; }, 50);
+                buildUIBase();
+            }, 250);
+        }
+
+        function logout() { location.reload(); }
         
-        const btnPaste = document.getElementById('btn-paste');
-        const btnCopy = document.getElementById('btn-copy');
-        const pcDeviceToggle = document.getElementById('pc-device-toggle');
-        const btnExitFs = document.getElementById('exit-fs');
-        const toast = document.getElementById('toast-message');
-
-        let currentActiveCode = localStorage.getItem('saved_html_code') || `<!DOCTYPE html>
-<html>
-<body>
-    <h2 style="color:#fff; text-align:center; padding-top:40vh; font-family:sans-serif;">No code layers in storage.</h2>
-</body>
-</html>`;
-
-        // Calculates exact lines of code and updates indicator badge string
-        function updateLineCountDisplay(codeText) {
-            if (!codeText) {
-                lineCounter.innerText = "0 lines";
-                return;
-            }
-            const linesArray = codeText.split(/\r\n|\r|\n/);
-            lineCounter.innerText = `${linesArray.length} lines`;
+        function switchTab(game) {
+            currentActiveTab = game;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-tab-${game}`).classList.add('active');
+            buildUIBase();
         }
 
-        // Active Viewport Code Injection Engine
-        function deployCode() {
-            const isLandscape = window.innerWidth > window.innerHeight;
-            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        function buildUIBase() {
+            const data = gameData[currentActiveTab];
+            document.getElementById('activeGameTitle').innerText = data.title;
+            const sel = document.getElementById('slotConfigSelector');
+            sel.innerHTML = data.slots.map(s => `<option value="${s}" ${s===100?'selected':''}>${s} Active Slots</option>`).join('');
+            runLiveCalculations();
+        }
+
+        function runLiveCalculations() {
+            const slots = parseInt(document.getElementById('slotConfigSelector').value);
+            const selectedFee = parseInt(document.getElementById('feeConfigSelector').value);
             
-            let sourcePayload = currentActiveCode;
+            const totalGrossCash = slots * selectedFee;
+            const baseFeePerPlayer = selectedFee - 5; 
+            
+            const adminProfitCashPerPlayer = baseFeePerPlayer / 4;  
+            const rank1CashPerPlayer = baseFeePerPlayer / 2;         
+            const rank2CashPerPlayer = baseFeePerPlayer / 4;         
+            
+            const adminProfitCash = adminProfitCashPerPlayer * slots;
+            const firstPrizeCash = rank1CashPerPlayer * slots;
+            const secondPrizeCash = rank2CashPerPlayer * slots;
+            const totalPrizePoolCash = firstPrizeCash + secondPrizeCash;
 
-            // Run counter utility update check
-            updateLineCountDisplay(sourcePayload);
+            const totalPromoterPayoutCash = 5 * slots;
+            const userBonusGCoins = 50 * slots;
 
-            if (isMobileDevice && isLandscape) {
-                const desktopViewportMeta = '<meta name="viewport" content="width=1280, initial-scale=1.0, shrink-to-fit=no">';
-                if (sourcePayload.includes('<head>')) {
-                    sourcePayload = sourcePayload.replace('<head>', `<head>${desktopViewportMeta}`);
-                } else {
-                    sourcePayload = desktopViewportMeta + sourcePayload;
-                }
-            } else {
-                const mobileViewportMeta = '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
-                if (sourcePayload.includes('<head>')) {
-                    sourcePayload = sourcePayload.replace('<head>', `<head>${mobileViewportMeta}`);
-                } else {
-                    sourcePayload = mobileViewportMeta + sourcePayload;
-                }
-            }
+            const grossCoins = totalGrossCash * RUPEE_TO_GCOIN;
+            const poolCoins = totalPrizePoolCash * RUPEE_TO_GCOIN;
+            const adminCoins = adminProfitCash * RUPEE_TO_GCOIN;
+            const promoterCoins = totalPromoterPayoutCash * RUPEE_TO_GCOIN;
+            const rank1Coins = firstPrizeCash * RUPEE_TO_GCOIN;
+            const rank2Coins = secondPrizeCash * RUPEE_TO_GCOIN;
 
-            const blob = new Blob([sourcePayload], { type: 'text/html;charset=utf-8' });
-            previewFrame.src = URL.createObjectURL(blob);
+            document.getElementById('coinGrossContainer').innerHTML = generateBrutalCoinMarkup(grossCoins, 'Gross', totalGrossCash);
+            document.getElementById('coinPoolContainer').innerHTML = generateBrutalCoinMarkup(poolCoins, 'Pool', totalPrizePoolCash);
+            document.getElementById('coinAdminContainer').innerHTML = generateBrutalCoinMarkup(adminCoins, 'Admin', adminProfitCash);
+            document.getElementById('coinPromoterContainer').innerHTML = generateBrutalCoinMarkup(promoterCoins, 'Promo', totalPromoterPayoutCash);
+            document.getElementById('coinUserBonusContainer').innerHTML = generateBrutalCoinMarkup(userBonusGCoins, 'Virtual', 0, true);
+
+            document.getElementById('coinRank1Container').innerHTML = generateBrutalCoinMarkup(rank1Coins, '1st', firstPrizeCash);
+            document.getElementById('coinRank2Container').innerHTML = generateBrutalCoinMarkup(rank2Coins, '2nd', secondPrizeCash);
+
+            generateBracketVisual(slots);
         }
 
-        function triggerToastBanner(messageText) {
-            toast.innerText = messageText;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 1500);
+        function generateBracketVisual(slots) {
+            const container = document.getElementById('bracketDynamicInject');
+            let html = '<div class="round"><div class="round-title">Live Bracket Projection</div>';
+            const displayLimit = Math.min(4, Math.max(1, slots / 2));
+            for(let m=0; m<displayLimit; m++) {
+                html += `
+                    <div class="match">
+                        <div class="competitor seed-winner">
+                            <span>Verified Competitor</span>
+                            <span style="opacity:0.5; font-size:0.75rem;">Seed #1</span>
+                        </div>
+                        <div class="competitor">
+                            <span>TBD Rival Slot</span>
+                            <span style="opacity:0.3; font-size:0.75rem;">--</span>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div>';
+            container.innerHTML = html;
         }
-
-        // Initial System Setup Hooks
-        const isMobilePlatform = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if (!isMobilePlatform) {
-            pcDeviceToggle.style.display = "block";
-        }
-
-        // Paste Command Sequence
-        btnPaste.addEventListener('click', async () => {
-            try {
-                const copiedData = await navigator.clipboard.readText();
-                if (copiedData) {
-                    currentActiveCode = copiedData;
-                    localStorage.setItem('saved_html_code', currentActiveCode);
-                    deployCode();
-                    triggerToastBanner("Compiled.");
-
-                    if (fullscreenRoot.requestFullscreen) {
-                        fullscreenRoot.requestFullscreen();
-                    } else if (fullscreenRoot.webkitRequestFullscreen) {
-                        fullscreenRoot.webkitRequestFullscreen();
-                    }
-                }
-            } catch (err) {
-                alert("Please authorize clipboard sync access permissions.");
-            }
-        });
-
-        btnCopy.addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(currentActiveCode);
-                triggerToastBanner("Copied source code.");
-            } catch (err) {
-                triggerToastBanner("Transfer error.");
-            }
-        });
-
-        pcDeviceToggle.addEventListener('click', () => {
-            frameHousing.classList.toggle('pc-simulated-phone');
-            if (frameHousing.classList.contains('pc-simulated-phone')) {
-                pcDeviceToggle.classList.add('active');
-                pcDeviceToggle.innerText = "Switch to PC View";
-            } else {
-                pcDeviceToggle.classList.remove('active');
-                pcDeviceToggle.innerText = "Simulate Mobile View";
-            }
-        });
-
-        btnExitFs.addEventListener('click', () => {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
-        });
-
-        window.addEventListener('resize', deployCode);
-        window.addEventListener('orientationchange', deployCode);
-        window.addEventListener('DOMContentLoaded', deployCode);
     </script>
 </body>
 </html>
