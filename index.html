@@ -103,6 +103,7 @@
         
         .req-center-trigger { background: var(--brutal-cyan); display: flex; align-items: center; gap: 8px; }
         .btn-logout { background: #f87171; }
+        .btn-images { background: #eab308; }
 
         .notification-badge { background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 900; padding: 2px 6px; border: 2px solid #000; border-radius: 12px; display: none; box-shadow: 2px 2px 0px #000; }
         .notification-badge.active { display: inline-block; }
@@ -122,7 +123,7 @@
         .history-timeline::-webkit-scrollbar-thumb { background: #000; }
         .history-timeline::-webkit-scrollbar-track { background: #fff; }
 
-        .history-item { width: 130px; height: 95px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; cursor: pointer; position: relative; transition: transform 0.1s ease; }
+        .history-item { width: 130px; height: 95px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; cursor: pointer; position: relative; transition: transform 0.1s ease; user-select: none; }
         .history-item:hover { transform: translateY(-2px); }
         .thumb-wrapper { width: 100%; height: 60px; border: var(--brutal-border); background: #ffffff; overflow: hidden; position: relative; box-shadow: var(--brutal-shadow-sm); }
         .history-item.active .thumb-wrapper { background: var(--brutal-lime); box-shadow: 4px 4px 0px var(--brutal-pink); border-color: var(--brutal-black); }
@@ -133,12 +134,12 @@
         .history-meta-line { display: flex; align-items: center; justify-content: space-between; font-size: 0.65rem; background: #fff; border: 2px solid #000; padding: 2px 4px; margin-top: 2px; font-weight: 900; }
 
         /* ==========================================================================
-           P2P SYNC MATRIX (REQUEST CENTER MODAL)
+           MODALS (P2P & IMAGES)
            ========================================================================== */
-        #request-center-modal { position: fixed; inset: 0; background: var(--bg-main); z-index: 500; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: var(--brutal-border); }
-        #request-center-modal.open { transform: translateY(0); }
+        .modal-screen { position: fixed; inset: 0; background: var(--bg-main); z-index: 500; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); border: var(--brutal-border); }
+        .modal-screen.open { transform: translateY(0); }
         
-        .req-center-header { height: 64px; border-bottom: var(--brutal-border); display: flex; align-items: center; padding: 0 16px; gap: 16px; background-color: var(--brutal-pink); box-shadow: 0 4px 0px rgba(0,0,0,0.1) inset; }
+        .modal-header { height: 64px; border-bottom: var(--brutal-border); display: flex; align-items: center; padding: 0 16px; gap: 16px; background-color: var(--brutal-pink); box-shadow: 0 4px 0px rgba(0,0,0,0.1) inset; }
         .split-viewport-container { flex: 1; display: flex; width: 100%; height: calc(100% - 64px); }
         .split-half-pane { flex: 1; border-right: var(--brutal-border); display: flex; flex-direction: column; padding: 24px; overflow-y: auto; gap: 18px; }
         .split-half-pane:last-child { border-right: none; background: #e4e4e7; }
@@ -160,6 +161,12 @@
         .btn-accept { background: var(--brutal-lime); }
         .btn-deny { background: #f87171; }
         .btn-revoke { background: #000; color: #fff; }
+
+        /* Image Gallery Styles */
+        .img-asset-card { border: var(--brutal-border); background: #fff; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; box-shadow: var(--brutal-shadow-sm); transition: transform 0.1s; width: 140px; user-select: none; }
+        .img-asset-card:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
+        .img-asset-card img { width: 100%; height: 80px; object-fit: cover; border: 2px solid #000; }
+        .img-asset-card span { font-size: 0.75rem; font-weight: 900; word-break: break-all; text-align: center; }
 
         /* ==========================================================================
            CORE WORKSPACE ENGINE (CANVAS RENDERING DESK)
@@ -263,7 +270,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            // --- URL INTERCEPTION FOR PRODUCTION HOSTING ---
+            // --- URL INTERCEPTION FOR PRODUCTION HOSTING & AUTO-IMAGE INJECTION ---
             const urlParams = new URLSearchParams(window.location.search);
             const hostLayerToken = urlParams.get('layer');
 
@@ -274,13 +281,27 @@
                 const snap = await window.FBGet(layerRef);
                 
                 if (snap.exists()) {
+                    let finalCode = snap.val().code;
+                    const layerOwner = snap.val().owner;
+
+                    // Privacy Security Matrix: Automatically fetches ONLY the images belonging to the owner of this layer
+                    if (layerOwner) {
+                        const imagesSnap = await window.FBGet(window.FBRef(db, `users/${layerOwner}/images`));
+                        if (imagesSnap.exists()) {
+                            Object.values(imagesSnap.val()).forEach(img => {
+                                // Replaces every instance of the filename with the actual Base64 data
+                                finalCode = finalCode.split(img.name).join(img.data);
+                            });
+                        }
+                    }
+
                     document.open();
-                    document.write(snap.val().code);
+                    document.write(finalCode);
                     document.close();
                 } else {
                     document.body.innerHTML = "<div style='display:flex; height:100vh; align-items:center; justify-content:center; background:#000; color:#ef4444; font-family:monospace; font-size:2.5rem; font-weight:900;'>404 // DEPLOYMENT NOT FOUND.</div>";
                 }
-                return; // Stop the rest of the application UI from loading
+                return; 
             }
             // --- END OF URL INTERCEPTION ---
 
@@ -408,6 +429,7 @@
                 <input type="text" id="brutal-paste-gateway" class="paste-gateway-box" placeholder="PASTE CODE HERE OR CLICK BUTTON TO COMPILE...">
                 <button class="paste-append-btn" id="btn-paste-gofull">Paste & Go Full</button>
             </div>
+            <button class="brutal-control-btn btn-images" id="btn-open-images">📸 ASSETS</button>
             <button class="brutal-control-btn" id="btn-copy">Copy Code</button>
             <button class="brutal-control-btn req-center-trigger" id="btn-open-requests">
                 ⚡ P2P SYNC MATRIX <span id="p2p-badge" class="notification-badge">0</span>
@@ -416,12 +438,12 @@
     </header>
 
     <div class="history-tray" id="tray-container">
-        <h3>EVIDEOUTPUT RUNTIME STREAM LAYERS</h3>
+        <h3>EVIDEOUTPUT RUNTIME STREAM LAYERS (DOUBLE-TAP TO DELETE)</h3>
         <div class="history-timeline" id="timeline-tray"></div>
     </div>
 
-    <div id="request-center-modal">
-        <div class="req-center-header">
+    <div id="request-center-modal" class="modal-screen">
+        <div class="modal-header">
             <button class="brutal-control-btn" id="btn-close-requests">← CLOSE MATRIX</button>
             <div class="pane-title" style="background:#fff; color:#000;">SYNC TUNNEL CONTROLLER</div>
         </div>
@@ -455,6 +477,34 @@
         </div>
     </div>
 
+    <div id="image-manager-modal" class="modal-screen">
+        <div class="modal-header">
+            <button class="brutal-control-btn" id="btn-close-images">← CLOSE ASSETS</button>
+            <div class="pane-title" style="background:#fff; color:#000;">BASE64 ASSET LIBRARY</div>
+            <div class="pane-title" style="background: var(--brutal-black); color:#fff; font-size: 0.75rem; border: 2px solid var(--brutal-lime); box-shadow: 2px 2px 0px var(--brutal-lime); margin-left: auto;">
+                🔒 ISOLATED STORAGE: ASSETS ARE BOUND STRICTLY TO YOUR UNIQUE PROFILE.
+            </div>
+        </div>
+        <div class="split-viewport-container" style="flex-direction: column; overflow-y: auto;">
+            <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px; max-width: 800px; width: 100%; margin: 0 auto;">
+                
+                <div class="pane-title" style="background: var(--brutal-cyan); color:#000;">1. ENCODE NEW ASSET (AUTO-SCALES HUGE IMAGES)</div>
+                <div class="brutal-group" style="background: #fff; padding: 24px; border: var(--brutal-border); box-shadow: var(--brutal-shadow-md);">
+                    <input type="file" id="img-upload-input" accept="image/*" class="brutal-input" style="padding: 10px;">
+                    <label style="margin-top: 12px; background: var(--brutal-black); color: #fff;">ASSIGN MANDATORY NAME</label>
+                    <input type="text" id="img-name-input" class="brutal-input" placeholder="e.g. flower.png" autocomplete="off">
+                    <button class="brutal-btn" id="btn-save-img" style="margin-top: 12px;">ENCODE TO DATABASE</button>
+                    <p style="font-size: 0.8rem; margin-top: 8px;"><b>PRO TIP:</b> Name it `flower.png`. In your code, just write <code>&lt;img src="flower.png"&gt;</code>. The system will automatically inject the image when rendered!</p>
+                </div>
+
+                <div class="pane-title" style="background: var(--brutal-yellow); color:#000;">2. SAVED ASSETS (TAP TO COPY NAME • DOUBLE-TAP TO ERASE)</div>
+                <div id="image-gallery-grid" style="display: flex; gap: 16px; flex-wrap: wrap; padding-bottom: 30px;">
+                    </div>
+
+            </div>
+        </div>
+    </div>
+
     <div class="workspace-wrapper" id="fullscreen-root">
         <div class="canvas-container" id="main-canvas">
             
@@ -482,6 +532,7 @@
         window.currentAuthMode = 'login'; 
         let currentSystemUser = "";
         let codeHistory = [];
+        let userImages = {}; // Stores Base64 User Images
         let currentActiveIdx = -1;
         let isIphoneSkinActive = localStorage.getItem('iphone_skin_state') === 'true';
         let targetedSearchLayer = null;
@@ -511,6 +562,8 @@
         
         const reqCenterModal = document.getElementById('request-center-modal');
         const p2pBadge = document.getElementById('p2p-badge');
+        const imageManagerModal = document.getElementById('image-manager-modal');
+        
         const btnShareLink = document.getElementById('btn-share-link');
         const btnEnterFs = document.getElementById('enter-fs');
         const iphoneToggle = document.getElementById('iphone-toggle');
@@ -595,7 +648,7 @@
             document.getElementById("user-avatar").innerText = currentSystemUser.substr(0,2).toUpperCase();
             document.getElementById("user-display-name").innerText = `@${currentSystemUser}`;
             
-            // 🚨 REAL-TIME CLOUD PULL: Auto-syncs everywhere via Token Nodes 🚨
+            // Sync Code History
             window.FBOnValue(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory`), (snap) => {
                 if (snap.exists()) {
                     const rawData = snap.val();
@@ -611,6 +664,17 @@
 
                 rebuildHistoryTimelineDOM();
                 renderActiveCanvasContent();
+            });
+
+            // 🚨 Sync User Image Assets: Strictly bounded to the CURRENT user's profile node 🚨
+            window.FBOnValue(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/images`), (snap) => {
+                if (snap.exists()) {
+                    userImages = snap.val();
+                } else {
+                    userImages = {};
+                }
+                renderImageGalleryDOM();
+                renderActiveCanvasContent(); // Re-render to inject new images instantly
             });
             
             window.initializeSystemSync(currentSystemUser);
@@ -638,12 +702,22 @@
                 previewFrame.src = URL.createObjectURL(new Blob([def], { type: 'text/html;charset=utf-8' }));
                 return;
             }
-            const currentLayer = codeHistory[currentActiveIdx];
-            updateLineCountDisplay(currentLayer.code);
+            
+            let finalCodeToRender = codeHistory[currentActiveIdx].code;
+            
+            // 🚨 MAGIC AUTO-IMAGE INJECTION 🚨
+            // Loops through stored user images (isolated to them) and swaps the text name with the massive Base64 URL 
+            Object.values(userImages).forEach(img => {
+                if(img.name && img.data) {
+                    finalCodeToRender = finalCodeToRender.split(img.name).join(img.data);
+                }
+            });
+
+            updateLineCountDisplay(finalCodeToRender);
             frameHousing.style.opacity = '0'; 
             
             setTimeout(() => {
-                previewFrame.src = URL.createObjectURL(new Blob([currentLayer.code], { type: 'text/html;charset=utf-8' }));
+                previewFrame.src = URL.createObjectURL(new Blob([finalCodeToRender], { type: 'text/html;charset=utf-8' }));
                 frameHousing.style.opacity = '1';
             }, 80);
 
@@ -670,7 +744,6 @@
             };
             
             if(window.FirebaseDB && currentSystemUser) {
-                // Uploads directly to Cloud DB. FBOnValue listener automatically draws it locally.
                 window.FBSet(window.FBRef(window.FirebaseDB, `globalLayers/${layerToken.replace('#','')}`), historyRecord);
                 window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${layerToken.replace('#','')}`), historyRecord);
             }
@@ -700,6 +773,7 @@
             }
         });
 
+        // --- HISTORY TRAY WITH DOUBLE TAP TO DELETE ---
         function rebuildHistoryTimelineDOM() {
             timelineTray.innerHTML = "";
             for (let i = codeHistory.length - 1; i >= 0; i--) {
@@ -717,6 +791,7 @@
                 const thumbWrapper = document.createElement('div');
                 thumbWrapper.className = 'thumb-wrapper';
                 const miniIframe = document.createElement('iframe');
+                // Don't inject images into thumbnails to save heavy processing power on huge histories
                 miniIframe.src = URL.createObjectURL(new Blob([item.code], { type: 'text/html;charset=utf-8' }));
                 thumbWrapper.appendChild(miniIframe);
                 
@@ -725,16 +800,132 @@
                 metaLine.innerHTML = `<span>${item.timestamp}</span><span style="overflow:hidden; max-width:60px; white-space:nowrap; text-overflow:ellipsis; color:var(--brutal-pink);">@${item.owner === currentSystemUser ? 'YOU' : item.owner}</span>`;
                 
                 card.appendChild(tokenBadge); card.appendChild(thumbWrapper); card.appendChild(metaLine);
-                card.addEventListener('click', () => { currentActiveIdx = i; localStorage.setItem('current_active_index', currentActiveIdx); renderActiveCanvasContent(); });
+                
+                // Cross-Platform Double Tap Logic
+                let lastTap = 0;
+                card.addEventListener('click', (e) => {
+                    const currentTime = new Date().getTime();
+                    const tapLength = currentTime - lastTap;
+                    if (tapLength < 350 && tapLength > 0) {
+                        // Double Tap Confirmed
+                        if (confirm("Are you sure you want to permanently erase this code layer?")) {
+                            window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${item.token.replace('#','')}`), null);
+                            window.FBSet(window.FBRef(window.FirebaseDB, `globalLayers/${item.token.replace('#','')}`), null);
+                            triggerToastBanner("LAYER ERASED.");
+                        }
+                    } else {
+                        // Single Tap (Wait slightly to ensure it's not a double-tap)
+                        setTimeout(() => {
+                            if (new Date().getTime() - lastTap >= 350) {
+                                currentActiveIdx = i; localStorage.setItem('current_active_index', currentActiveIdx); renderActiveCanvasContent();
+                            }
+                        }, 350);
+                    }
+                    lastTap = currentTime;
+                });
+                
                 timelineTray.appendChild(card);
             }
         }
+
+        // --- NEW IMAGE UPLOAD & OPTIMIZATION LOGIC ---
+        document.getElementById('btn-open-images').addEventListener('click', () => imageManagerModal.classList.add('open'));
+        document.getElementById('btn-close-images').addEventListener('click', () => imageManagerModal.classList.remove('open'));
+
+        document.getElementById('btn-save-img').addEventListener('click', () => {
+            const fileInput = document.getElementById('img-upload-input');
+            const file = fileInput.files[0];
+            const nameInput = document.getElementById('img-name-input');
+            const name = nameInput.value.trim();
+
+            if (!file || !name) { triggerToastBanner("FILE & NAME ARE REQUIRED!"); return; }
+
+            triggerToastBanner("ENCODING & OPTIMIZING ASSET...");
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; // Optimal for web without destroying firebase storage
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Calculate aspect ratio
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress to JPG Base64 (0.8 quality) - Works perfectly for PNG files too.
+                    const base64String = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Firebase keys can't contain '.', '#', '$', '[', or ']'.
+                    const safeKey = name.replace(/[.#$[\]]/g, "_");
+
+                    // 🚨 Saved tightly into current user's profile tree 🚨
+                    window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/images/${safeKey}`), { 
+                        name: name, 
+                        data: base64String 
+                    });
+                    
+                    triggerToastBanner(`ASSET "${name}" STORED!`);
+                    fileInput.value = ''; nameInput.value = '';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // --- RENDER IMAGE GALLERY WITH DOUBLE-TAP DELETE ---
+        function renderImageGalleryDOM() {
+            const grid = document.getElementById('image-gallery-grid');
+            grid.innerHTML = "";
+            
+            Object.keys(userImages).forEach(key => {
+                const imgData = userImages[key];
+                const card = document.createElement('div');
+                card.className = "img-asset-card";
+                card.innerHTML = `<img src="${imgData.data}"><span>${imgData.name}</span>`;
+                
+                let lastTap = 0;
+                card.addEventListener('click', (e) => {
+                    const currentTime = new Date().getTime();
+                    const tapLength = currentTime - lastTap;
+                    
+                    if (tapLength < 350 && tapLength > 0) {
+                        // Double Tap - Delete
+                        if (confirm(`Delete the asset "${imgData.name}"?`)) {
+                            window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/images/${key}`), null);
+                            triggerToastBanner("ASSET ERASED.");
+                        }
+                    } else {
+                        // Single Tap - Copy Name
+                        setTimeout(() => {
+                            if (new Date().getTime() - lastTap >= 350) {
+                                navigator.clipboard.writeText(imgData.name);
+                                triggerToastBanner(`COPIED NAME: ${imgData.name}`);
+                            }
+                        }, 350);
+                    }
+                    lastTap = currentTime;
+                });
+                
+                grid.appendChild(card);
+            });
+        }
+
 
         // --- BULLETPROOF P2P DATA REVOCATION ENGINE ---
         window.removeRevokedPeerLayer = function(token) {
             if (!token) return;
             if(window.FirebaseDB && currentSystemUser) {
-                // 🚨 Explicitly deletes token from cloud, triggering automatic local purge 🚨
                 window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${token.replace('#','')}`), null);
                 localStorage.removeItem(`peer_layer_${token.replace('#','')}`);
                 triggerToastBanner("PEER ACCESS REVOKED. DATA PURGED.");
@@ -755,7 +946,6 @@
             btnSubmitRequest.disabled = true;
         });
 
-        // Search Layer (Privacy Lock Enforced)
         layerSearchInput.addEventListener('input', async () => {
             const rawToken = layerSearchInput.value.trim().toUpperCase().replace('#','');
             if(rawToken.length < 7) { 
@@ -896,7 +1086,6 @@
                                 owner: `(PEER) ${safeTarget}`, timestampEpoch: Date.now() 
                             };
                             
-                            // 🚨 Automatically sync approved peer code directly into Cloud DB 🚨
                             window.FBSet(window.FBRef(window.FirebaseDB, `users/${currentSystemUser}/codeHistory/${req.token.replace('#','')}`), peerRecord);
                             triggerToastBanner("EXTERNAL PEER LAYER RECEIVED & MERGED");
                         }
@@ -936,7 +1125,7 @@
             } else { triggerToastBanner("ERR: NO SOURCE FOUND."); }
         });
 
-        // --- NEW: GENERATE & OPEN PRODUCTION LINK ---
+        // --- HOST LINK PRODUCTION BUILD ---
         btnShareLink.addEventListener('click', async () => {
             if (currentActiveIdx !== -1 && codeHistory[currentActiveIdx]) {
                 const activeToken = codeHistory[currentActiveIdx].token.replace('#', '');
