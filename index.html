@@ -863,8 +863,10 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress to JPG Base64 (0.8 quality) - Works perfectly for PNG files too.
-                    const base64String = canvas.toDataURL('image/jpeg', 0.8);
+                    // Dynamic format: Preserve PNG for transparency, otherwise compress as JPG
+                    const isPNG = file.type === 'image/png';
+                    const outputFormat = isPNG ? 'image/png' : 'image/jpeg';
+                    const base64String = canvas.toDataURL(outputFormat, isPNG ? undefined : 0.8);
                     
                     // Firebase keys can't contain '.', '#', '$', '[', or ']'.
                     const safeKey = name.replace(/[.#$[\]]/g, "_");
